@@ -1,20 +1,15 @@
-from estruturas.lista_encadeada import ListaEncadeada
-
 class Usuario:
     def __init__(self, id_usuario, nome, email):
         self.id_usuario = id_usuario
         self.nome = nome
         self.email = email
-        # Histórico de empréstimos do usuário armazenado em lista encadeada
-        self.historico_emprestimos = ListaEncadeada()
 
-    def adicionar_ao_historico(self, livro):
-        # Adiciona um livro ao histórico do usuário
-        self.historico_emprestimos.adicionar({
-            "id_livro": livro.id_livro,
-            "titulo": livro.titulo
-        })
+    def to_csv(self):
+        return f"{self.id_usuario},{self.nome},{self.email}\n"
 
-    def ver_historico(self):
-        # Retorna a lista de empréstimos do usuário
-        return self.historico_emprestimos.listar()
+    @staticmethod
+    def from_csv(linha):
+        partes = linha.strip().split(",")
+        if len(partes) != 3:
+            return None
+        return Usuario(partes[0], partes[1], partes[2])
