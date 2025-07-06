@@ -8,8 +8,10 @@ def menu():
     print("2. Cadastrar usuário")
     print("3. Emprestar livro")
     print("4. Devolver livro")
-    print("5. Ver histórico do usuário")
-    print("6. Ver ranking de popularidade")
+    print("5. Ver empréstimos ativos do usuário")
+    print("6. Ver histórico completo do usuário")
+    print("7. Listar acervo da biblioteca")
+    print("8. Exibir ranking de popularidade dos livros")
     print("0. Sair")
 
 while True:
@@ -21,7 +23,11 @@ while True:
         titulo = input("Título: ")
         autor = input("Autor: ")
         genero = input("Gênero: ")
-        copias = int(input("Número de cópias: "))
+        try:
+            copias = int(input("Número de cópias: "))
+        except ValueError:
+            print("Número de cópias inválido. Tente novamente.")
+            continue
         sistema.cadastrar_livro(id_livro, titulo, autor, genero, copias)
 
     elif opcao == "2":
@@ -36,19 +42,27 @@ while True:
         sistema.emprestar_livro(id_usuario, id_livro)
 
     elif opcao == "4":
+        id_usuario = input("ID do usuário: ")
         id_livro = input("ID do livro: ")
-        sistema.devolver_livro(id_livro)
+        sistema.devolver_livro(id_usuario, id_livro)
 
     elif opcao == "5":
         id_usuario = input("ID do usuário: ")
         sistema.exibir_historico_usuario(id_usuario)
 
     elif opcao == "6":
-        sistema.exibir_ranking()
+        id_usuario = input("ID do usuário: ")
+        sistema.exibir_historico_completo(id_usuario)
+
+    elif opcao == "7":
+        sistema.listar_acervo()
+
+    elif opcao == "8":
+        sistema.exibir_ranking_popularidade()
 
     elif opcao == "0":
         print("Encerrando o sistema...")
         break
 
     else:
-        print("Opção inválida.")
+        print("Opção inválida. Tente novamente.")
