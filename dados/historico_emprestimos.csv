@@ -1,0 +1,5 @@
+id_usuario,id_livro,acao,data_hora
+1,1,emprestou,2026-04-28 13:57:00
+1,1,devolveu,2026-04-28 13:57:08
+1,1,emprestou,2026-04-28 14:35:28
+1,1,devolveu,2026-04-28 14:35:35
