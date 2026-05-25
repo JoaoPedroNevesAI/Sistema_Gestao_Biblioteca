@@ -3,8 +3,33 @@ from sistema.sistema import SistemaBiblioteca
 sistema = SistemaBiblioteca()
 
 
+def mensagem_sucesso(texto):
+    print("\n" + "=" * 50)
+    print(f"✅ {texto}".center(50))
+    print("=" * 50)
+
+
+def mensagem_erro(texto):
+    print("\n" + "=" * 50)
+    print(f"❌ {texto}".center(50))
+    print("=" * 50)
+
+
+def mensagem_aviso(texto):
+    print("\n" + "=" * 50)
+    print(f"⚠️ {texto}".center(50))
+    print("=" * 50)
+
+
+def titulo(texto):
+    print("\n" + "=" * 50)
+    print(texto.center(50))
+    print("=" * 50)
+
+
 def menu():
-    print("\n========== SISTEMA DE GESTÃO DE BIBLIOTECA ==========")
+    titulo("SISTEMA DE GESTÃO DE BIBLIOTECA")
+
     print("1. Cadastrar livro")
     print("2. Cadastrar usuário")
     print("3. Emprestar livro")
@@ -27,7 +52,7 @@ def ler_id(mensagem):
         if valor.isdigit():
             return valor
 
-        print("Digite apenas números.")
+        mensagem_erro("Digite apenas números.")
 
 
 def ler_nome(mensagem):
@@ -35,7 +60,7 @@ def ler_nome(mensagem):
         valor = input(mensagem).strip()
 
         if not valor:
-            print("Campo obrigatório.")
+            mensagem_erro("Campo obrigatório.")
             continue
 
         valido = True
@@ -48,7 +73,7 @@ def ler_nome(mensagem):
         if valido:
             return valor
 
-        print("Digite apenas letras.")
+        mensagem_erro("Digite apenas letras.")
 
 
 def ler_email():
@@ -58,7 +83,7 @@ def ler_email():
         if "@" in valor and "." in valor:
             return valor
 
-        print("Email inválido.")
+        mensagem_erro("Email inválido.")
 
 
 def ler_texto(mensagem):
@@ -68,7 +93,7 @@ def ler_texto(mensagem):
         if valor:
             return valor
 
-        print("Campo obrigatório.")
+        mensagem_erro("Campo obrigatório.")
 
 
 def ler_numero(mensagem):
@@ -78,54 +103,57 @@ def ler_numero(mensagem):
         if valor.isdigit() and int(valor) > 0:
             return int(valor)
 
-        print("Digite apenas números inteiros maiores que zero.")
+        mensagem_erro("Digite um número inteiro maior que zero.")
 
 
 while True:
     menu()
-    opcao = input("Escolha uma opção: ").strip()
+
+    opcao = input("\nEscolha uma opção: ").strip()
 
     if opcao == "1":
-        while True:
-            id_livro = ler_id("ID do livro: ")
-
-            if id_livro not in sistema.livros:
-                break
-
-            print("Já existe um livro com esse ID.")
-
-        titulo = ler_texto("Título: ")
+        id_livro = ler_id("ID do livro: ")
+        titulo_livro = ler_texto("Título: ")
         autor = ler_nome("Autor: ")
         genero = ler_nome("Gênero: ")
         copias = ler_numero("Número de cópias: ")
 
-        sistema.cadastrar_livro(id_livro, titulo, autor, genero, copias)
+        sistema.cadastrar_livro(
+            id_livro,
+            titulo_livro,
+            autor,
+            genero,
+            copias
+        )
 
     elif opcao == "2":
-        while True:
-            id_usuario = ler_id("ID do usuário: ")
-
-            if id_usuario not in sistema.usuarios:
-                break
-
-            print("Já existe um usuário com esse ID.")
-
+        id_usuario = ler_id("ID do usuário: ")
         nome = ler_nome("Nome: ")
         email = ler_email()
 
-        sistema.cadastrar_usuario(id_usuario, nome, email)
+        sistema.cadastrar_usuario(
+            id_usuario,
+            nome,
+            email
+        )
 
     elif opcao == "3":
         id_usuario = ler_id("ID do usuário: ")
         id_livro = ler_id("ID do livro: ")
 
-        sistema.emprestar_livro(id_usuario, id_livro)
+        sistema.emprestar_livro(
+            id_usuario,
+            id_livro
+        )
 
     elif opcao == "4":
         id_usuario = ler_id("ID do usuário: ")
         id_livro = ler_id("ID do livro: ")
 
-        sistema.devolver_livro(id_usuario, id_livro)
+        sistema.devolver_livro(
+            id_usuario,
+            id_livro
+        )
 
     elif opcao == "5":
         id_usuario = ler_id("ID do usuário: ")
@@ -151,15 +179,17 @@ while True:
 
     elif opcao == "11":
         id_usuario = ler_id("ID do usuário: ")
+
         sistema.remover_usuario(id_usuario)
 
     elif opcao == "12":
         id_livro = ler_id("ID do livro: ")
+
         sistema.remover_livro(id_livro)
 
     elif opcao == "0":
-        print("Encerrando sistema...")
+        mensagem_aviso("Encerrando sistema...")
         break
 
     else:
-        print("Opção inválida.")
+        mensagem_erro("Opção inválida.")

@@ -24,8 +24,12 @@ class SistemaBiblioteca:
         self.emprestimos = []
 
         self.reservas = {}
+
         self.popularidade = HeapPopularidade()
         self.historico = ListaEncadeada()
+
+        self.ids_usuarios_removidos = set()
+        self.ids_livros_removidos = set()
 
         self._criar_arquivos_csv()
 
@@ -34,155 +38,173 @@ class SistemaBiblioteca:
         self.carregar_emprestimos()
         self.carregar_historico()
 
+    def sucesso(self, mensagem):
+        print("\n" + "=" * 50)
+        print(f"✅ {mensagem}".center(50))
+        print("=" * 50)
+
+    def erro(self, mensagem):
+        print("\n" + "=" * 50)
+        print(f"❌ {mensagem}".center(50))
+        print("=" * 50)
+
+    def aviso(self, mensagem):
+        print("\n" + "=" * 50)
+        print(f"⚠️ {mensagem}".center(50))
+        print("=" * 50)
+
     def _criar_arquivos_csv(self):
         if not os.path.exists(PASTA_DADOS):
             os.makedirs(PASTA_DADOS)
 
         if not os.path.exists(USUARIOS_CSV):
-            with open(USUARIOS_CSV, "w") as f:
+            with open(USUARIOS_CSV, "w", encoding="utf-8") as f:
                 f.write("id,nome,email\n")
 
         if not os.path.exists(LIVROS_CSV):
-            with open(LIVROS_CSV, "w") as f:
+            with open(LIVROS_CSV, "w", encoding="utf-8") as f:
                 f.write("id,titulo,autor,genero,copias\n")
 
         if not os.path.exists(EMPRESTIMOS_CSV):
-            open(EMPRESTIMOS_CSV, "w").close()
+            open(EMPRESTIMOS_CSV, "w", encoding="utf-8").close()
 
         if not os.path.exists(HISTORICO_CSV):
-            with open(HISTORICO_CSV, "w") as f:
+            with open(HISTORICO_CSV, "w", encoding="utf-8") as f:
                 f.write("id_usuario,id_livro,acao,data_hora\n")
 
     def carregar_usuarios(self):
-        with open(USUARIOS_CSV, "r") as f:
-            next(f)
-            for linha in f:
+        with open(USUARIOS_CSV, "r", encoding="utf-8") as f:
+            linhas = f.readlines()
+
+            if len(linhas) <= 1:
+                return
+
+            for linha in linhas[1:]:
                 usuario = Usuario.from_csv(linha)
+
                 if usuario:
                     self.usuarios[usuario.id_usuario] = usuario
 
     def salvar_usuarios(self):
-        with open(USUARIOS_CSV, "w") as f:
+        with open(USUARIOS_CSV, "w", encoding="utf-8") as f:
             f.write("id,nome,email\n")
+
             for usuario in self.usuarios.values():
                 f.write(usuario.to_csv())
 
     def carregar_livros(self):
-        with open(LIVROS_CSV, "r") as f:
-            next(f)
-            for linha in f:
+        with open(LIVROS_CSV, "r", encoding="utf-8") as f:
+            linhas = f.readlines()
+
+            if len(linhas) <= 1:
+                return
+
+            for linha in linhas[1:]:
                 livro = Livro.from_csv(linha)
+
                 if livro:
                     self.livros[livro.id_livro] = livro
 
     def salvar_livros(self):
-        with open(LIVROS_CSV, "w") as f:
+        with open(LIVROS_CSV, "w", encoding="utf-8") as f:
             f.write("id,titulo,autor,genero,copias\n")
+
             for livro in self.livros.values():
                 f.write(livro.to_csv())
 
     def carregar_emprestimos(self):
-        with open(EMPRESTIMOS_CSV, "r") as f:
+        with open(EMPRESTIMOS_CSV, "r", encoding="utf-8") as f:
             for linha in f:
                 partes = linha.strip().split(",")
+
                 if len(partes) == 2:
                     self.emprestimos.append((partes[0], partes[1]))
 
     def salvar_emprestimos(self):
-        with open(EMPRESTIMOS_CSV, "w") as f:
+        with open(EMPRESTIMOS_CSV, "w", encoding="utf-8") as f:
             for usuario, livro in self.emprestimos:
                 f.write(f"{usuario},{livro}\n")
 
     def carregar_historico(self):
-        with open(HISTORICO_CSV, "r") as f:
-            next(f)
-            for linha in f:
+        with open(HISTORICO_CSV, "r", encoding="utf-8") as f:
+            linhas = f.readlines()
+
+            if len(linhas) <= 1:
+                return
+
+            for linha in linhas[1:]:
                 linha = linha.strip()
+
                 if linha:
                     self.historico.adicionar(linha)
 
-                    partes = linha.split(",")
-                    if len(partes) == 4:
-                        _, id_livro, acao, _ = partes
-
-                        if acao == "emprestou" and id_livro in self.livros:
-                            titulo = self.livros[id_livro].titulo
-                            self.popularidade.registrar_emprestimo(id_livro, titulo)
-
-    def cadastrar_usuario(self, id_usuario, nome, email):
-        if not id_usuario.isdigit():
-            print("ID do usuário deve conter apenas números.")
-            return False
-
-        if id_usuario in self.usuarios:
-            print("Usuário já existe.")
-            return False
-
-        if not nome.replace(" ", "").isalpha():
-            print("Nome deve conter apenas letras.")
-            return False
-
-        if "@" not in email or "." not in email:
-            print("Email inválido.")
-            return False
-
-        self.usuarios[id_usuario] = Usuario(id_usuario, nome, email)
-        self.salvar_usuarios()
-
-        print("Usuário cadastrado com sucesso.")
-        return True
-
-    def cadastrar_livro(self, id_livro, titulo, autor, genero, copias):
-        if not id_livro.isdigit():
-            print("ID do livro deve conter apenas números.")
-            return False
-
-        if id_livro in self.livros:
-            print("Livro já existe.")
-            return False
-
-        if not titulo.strip():
-            print("Título inválido.")
-            return False
-
-        if not autor.replace(" ", "").isalpha():
-            print("Autor deve conter apenas letras.")
-            return False
-
-        if not genero.replace(" ", "").isalpha():
-            print("Gênero deve conter apenas letras.")
-            return False
-
-        if not isinstance(copias, int) or copias <= 0:
-            print("Quantidade de cópias deve ser um número inteiro maior que zero.")
-            return False
-
-        self.livros[id_livro] = Livro(id_livro, titulo, autor, genero, copias)
-        self.salvar_livros()
-
-        print("Livro cadastrado com sucesso.")
-        return True
-
     def registrar_historico(self, id_usuario, id_livro, acao):
         data_hora = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
         linha = f"{id_usuario},{id_livro},{acao},{data_hora}"
 
         self.historico.adicionar(linha)
 
-        with open(HISTORICO_CSV, "a") as f:
+        with open(HISTORICO_CSV, "a", encoding="utf-8") as f:
             f.write(linha + "\n")
+
+    def cadastrar_usuario(self, id_usuario, nome, email):
+        if not id_usuario.isdigit():
+            self.erro("ID do usuário deve conter apenas números.")
+            return False
+
+        if id_usuario in self.usuarios:
+            self.erro("Já existe um usuário com esse ID.")
+            return False
+
+        if id_usuario in self.ids_usuarios_removidos:
+            self.erro("Esse ID já foi utilizado anteriormente.")
+            return False
+
+        self.usuarios[id_usuario] = Usuario(
+            id_usuario,
+            nome,
+            email
+        )
+
+        self.salvar_usuarios()
+
+        self.sucesso("Usuário cadastrado com sucesso.")
+        return True
+
+    def cadastrar_livro(self, id_livro, titulo, autor, genero, copias):
+        if not id_livro.isdigit():
+            self.erro("ID do livro deve conter apenas números.")
+            return False
+
+        if id_livro in self.livros:
+            self.erro("Já existe um livro com esse ID.")
+            return False
+
+        if id_livro in self.ids_livros_removidos:
+            self.erro("Esse ID já foi utilizado anteriormente.")
+            return False
+
+        self.livros[id_livro] = Livro(
+            id_livro,
+            titulo,
+            autor,
+            genero,
+            copias
+        )
+
+        self.salvar_livros()
+
+        self.sucesso("Livro cadastrado com sucesso.")
+        return True
 
     def emprestar_livro(self, id_usuario, id_livro):
         if id_usuario not in self.usuarios:
-            print("Usuário não encontrado.")
+            self.erro("Usuário não encontrado.")
             return False
 
         if id_livro not in self.livros:
-            print("Livro não encontrado.")
-            return False
-
-        if (id_usuario, id_livro) in self.emprestimos:
-            print("Usuário já possui este livro.")
+            self.erro("Livro não encontrado.")
             return False
 
         livro = self.livros[id_livro]
@@ -193,100 +215,102 @@ class SistemaBiblioteca:
 
             self.reservas[id_livro].enfileirar(id_usuario)
 
-            print("Sem cópias disponíveis. Usuário adicionado à fila de reserva.")
+            self.aviso("Sem cópias disponíveis. Usuário adicionado à fila.")
             return False
 
         livro.copias -= 1
+
         self.emprestimos.append((id_usuario, id_livro))
 
-        self.popularidade.registrar_emprestimo(id_livro, livro.titulo)
+        self.popularidade.registrar_emprestimo(
+            id_livro,
+            livro.titulo
+        )
 
         self.salvar_livros()
         self.salvar_emprestimos()
-        self.registrar_historico(id_usuario, id_livro, "emprestou")
 
-        print("Livro emprestado com sucesso.")
+        self.registrar_historico(
+            id_usuario,
+            id_livro,
+            "emprestou"
+        )
+
+        self.sucesso("Livro emprestado com sucesso.")
         return True
 
     def devolver_livro(self, id_usuario, id_livro):
         if (id_usuario, id_livro) not in self.emprestimos:
-            print("Empréstimo não encontrado.")
+            self.erro("Empréstimo não encontrado.")
             return False
 
         livro = self.livros[id_livro]
 
         self.emprestimos.remove((id_usuario, id_livro))
+
         livro.copias += 1
 
         self.salvar_emprestimos()
         self.salvar_livros()
-        self.registrar_historico(id_usuario, id_livro, "devolveu")
 
-        if id_livro in self.reservas:
-            fila = self.reservas[id_livro]
+        self.registrar_historico(
+            id_usuario,
+            id_livro,
+            "devolveu"
+        )
 
-            if not fila.esta_vazia():
-                proximo_usuario = fila.desenfileirar()
-
-                livro.copias -= 1
-                self.emprestimos.append((proximo_usuario, id_livro))
-
-                self.popularidade.registrar_emprestimo(id_livro, livro.titulo)
-
-                self.salvar_emprestimos()
-                self.salvar_livros()
-                self.registrar_historico(proximo_usuario, id_livro, "emprestou")
-
-                print("Livro reservado entregue automaticamente.")
-
-        print("Livro devolvido com sucesso.")
+        self.sucesso("Livro devolvido com sucesso.")
         return True
 
     def exibir_historico_usuario(self, id_usuario):
         if id_usuario not in self.usuarios:
-            print("Usuário não encontrado.")
+            self.erro("Usuário não encontrado.")
             return
 
-        print("\nEmpréstimos ativos:")
+        print("\nEMPRÉSTIMOS ATIVOS:")
 
         encontrou = False
 
         for usuario, livro_id in self.emprestimos:
             if usuario == id_usuario:
                 livro = self.livros[livro_id]
+
                 print(f"- {livro.titulo}")
+
                 encontrou = True
 
         if not encontrou:
-            print("Nenhum empréstimo ativo.")
+            self.aviso("Nenhum empréstimo ativo.")
 
     def exibir_historico_completo(self, id_usuario):
         if id_usuario not in self.usuarios:
-            print("Usuário não encontrado.")
+            self.erro("Usuário não encontrado.")
             return
 
-        print("\nHistórico completo:")
+        print("\nHISTÓRICO COMPLETO:")
 
-        dados = self.historico.listar()
         encontrou = False
 
-        for item in dados:
+        for item in self.historico.listar():
             if item.startswith(id_usuario + ","):
                 partes = item.split(",")
 
                 _, id_livro, acao, data = partes
 
-                titulo = self.livros[id_livro].titulo if id_livro in self.livros else "Livro removido"
+                titulo = self.livros[id_livro].titulo \
+                    if id_livro in self.livros \
+                    else "Livro removido"
 
                 print(f"{data} - {acao} - {titulo}")
+
                 encontrou = True
 
         if not encontrou:
-            print("Nenhum registro.")
+            self.aviso("Nenhum registro encontrado.")
 
     def listar_acervo(self):
         if not self.livros:
-            print("Nenhum livro cadastrado.")
+            self.aviso("Nenhum livro cadastrado.")
             return
 
         print("\nACERVO:")
@@ -304,7 +328,7 @@ class SistemaBiblioteca:
         ranking = self.popularidade.ranking()
 
         if not ranking:
-            print("Nenhum empréstimo registrado.")
+            self.aviso("Nenhum empréstimo registrado.")
             return
 
         print("\nRANKING DOS LIVROS:")
@@ -314,10 +338,10 @@ class SistemaBiblioteca:
 
     def exibir_filas_reserva(self):
         if not self.reservas:
-            print("Não há reservas registradas.")
+            self.aviso("Não há reservas registradas.")
             return
 
-        print("\n=== FILAS DE RESERVA ===")
+        print("\nFILAS DE RESERVA:")
 
         encontrou = False
 
@@ -328,18 +352,20 @@ class SistemaBiblioteca:
             encontrou = True
 
             livro = self.livros.get(id_livro)
+
             titulo = livro.titulo if livro else "Livro removido"
 
-            print(f"\nLivro: {titulo} (ID: {id_livro})")
+            print(f"\nLivro: {titulo}")
 
             for posicao, id_usuario in enumerate(fila.itens, start=1):
                 usuario = self.usuarios.get(id_usuario)
+
                 nome = usuario.nome if usuario else "Usuário removido"
 
-                print(f"{posicao}. {nome} (ID: {id_usuario})")
+                print(f"{posicao}. {nome}")
 
         if not encontrou:
-            print("Não há reservas pendentes.")
+            self.aviso("Não há reservas pendentes.")
 
     def relatorio_geral(self):
         total_usuarios = len(self.usuarios)
@@ -347,12 +373,15 @@ class SistemaBiblioteca:
         emprestimos_ativos = len(self.emprestimos)
 
         reservas = 0
+
         for fila in self.reservas.values():
             reservas += fila.tamanho()
 
         ranking = self.popularidade.ranking(1)
 
-        print("\n========== RELATÓRIO GERAL ==========")
+        print("\nRELATÓRIO GERAL")
+        print("-" * 40)
+
         print(f"Usuários cadastrados: {total_usuarios}")
         print(f"Livros cadastrados: {total_livros}")
         print(f"Empréstimos ativos: {emprestimos_ativos}")
@@ -360,49 +389,43 @@ class SistemaBiblioteca:
 
         if ranking:
             titulo, qtd = ranking[0]
+
             print(f"Livro mais popular: {titulo} ({qtd} empréstimos)")
-        else:
-            print("Livro mais popular: Nenhum empréstimo registrado")
 
     def remover_usuario(self, id_usuario):
         if id_usuario not in self.usuarios:
-            print("Usuário não encontrado.")
+            self.erro("Usuário não encontrado.")
             return False
 
         for usuario, _ in self.emprestimos:
             if usuario == id_usuario:
-                print("Usuário possui empréstimos ativos.")
+                self.erro("Usuário possui empréstimos ativos.")
                 return False
 
-        for fila in self.reservas.values():
-            if id_usuario in fila.itens:
-                print("Usuário está em fila de reserva.")
-                return False
+        self.ids_usuarios_removidos.add(id_usuario)
 
         del self.usuarios[id_usuario]
+
         self.salvar_usuarios()
 
-        print("Usuário removido com sucesso.")
+        self.sucesso("Usuário removido com sucesso.")
         return True
-
 
     def remover_livro(self, id_livro):
         if id_livro not in self.livros:
-            print("Livro não encontrado.")
+            self.erro("Livro não encontrado.")
             return False
 
         for _, livro in self.emprestimos:
             if livro == id_livro:
-                print("Livro está emprestado no momento.")
+                self.erro("Livro está emprestado.")
                 return False
 
-        if id_livro in self.reservas:
-            if not self.reservas[id_livro].esta_vazia():
-                print("Livro possui fila de reserva.")
-                return False
+        self.ids_livros_removidos.add(id_livro)
 
         del self.livros[id_livro]
+
         self.salvar_livros()
 
-        print("Livro removido com sucesso.")
+        self.sucesso("Livro removido com sucesso.")
         return True
