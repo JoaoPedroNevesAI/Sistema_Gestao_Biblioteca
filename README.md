@@ -72,7 +72,7 @@ Instruções para executar o projeto
  1. Pré-requisitos:
 - Ter o **Python 3.x** instalado.
 - Ter o **VS Code** ou outro editor de código.
-- Clonar o repositório ou copiar a pasta do projeto. (https://github.com/SEU_USUARIO/Sistema_Gestao_Biblioteca.git)
+- Clonar o repositório ou copiar a pasta do projeto. (https://github.com/JoaoPedroNevesAI/Sistema_Gestao_Biblioteca.git)
 
  2. No terminal: 
 - Entre no arquivo: cd sistema-biblioteca
@@ -86,7 +86,7 @@ Instruções para executar o projeto
 ##Como usar:
 
 1. Clone este repositório no terminal:
-git clone https://github.com/SEU_USUARIO/sistema-biblioteca.git
+git clone https://github.com/JoaoPedroNevesAI/sistema-biblioteca.git
 
 2. Entre no arquivo:
 cd sistema-biblioteca
